@@ -4,8 +4,8 @@ import realassistIcon from './assets/real-assist-icon.svg'
 import './App.css'
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-
+  const [sidebarOpen, setSidebarOpen] = useState('true')
+  const [currentPage, setCurrentPage] = useState('home')
   return (
     <>
      <div className ="page-layout">
@@ -14,8 +14,11 @@ function App() {
   <img src={realassistlogo} className="sidebar-logo" alt="Real Assist" />
 </button>
           <nav>
-            <a href="#center">Home</a>
-            <a href="#next-steps">Connect</a>
+            <button onClick={() => setCurrentPage('home')}>Home</button>
+            <button type="button" onClick={() => setCurrentPage('dashboard')}>My Dashboard</button>
+            <button type="button" onClick={() => setCurrentPage('clients')}>Clients</button>
+            <button type="button" onClick={() => setCurrentPage('resources')}>Resources</button>
+            <button type="button" onClick={() => setCurrentPage('calendar')}>Calendar</button>
           </nav>
         </aside>
      
@@ -25,12 +28,19 @@ function App() {
         <span aria-hidden="true"></span>
         <span aria-hidden="true"></span>
         </button>
-       <section id="center">
-          <img src={realassistlogo} className="base" width="170" height="179" alt="" />
-          <img src={realassistIcon} className="framework" alt="React logo" />
-      </section>
+      {currentPage === 'resources' ? (<section> <h1>Resources</h1></section>) : 
+       currentPage === 'calendar' ?(<section><h1>Calendar</h1> </section>) :
+       currentPage === 'clients' ? (<section><h1>Clients</h1></section>) : 
+       currentPage === 'dashboard' ? (<section><h1>My Dashboard</h1></section>) :
+    (<section id="center">
+    <img src={realassistlogo} className="base" width="170" height="179" alt="" />
+    <img src={realassistIcon} className="framework" alt="React logo" />
+    </section>
+)}
     </main>
-    </div>
+    
+  </div>
+
     </>
   )
 }

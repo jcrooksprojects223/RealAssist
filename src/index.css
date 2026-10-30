@@ -120,6 +120,20 @@ transition: width 0.25s ease;
   color: white;
   text-decoration: none;
 }
+.sidebar nav button {
+   background: transparent;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; 
+}
 
 .sidebar.closed{
   width: 0;
@@ -128,6 +142,12 @@ transition: width 0.25s ease;
   flex: 1;
   min-width: 0;
 }
+
+.resources {
+  padding: 24px;
+  text-align: left;
+}
+
 
 body {
   margin: 0;
