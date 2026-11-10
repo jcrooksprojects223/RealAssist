@@ -1,7 +1,13 @@
+<!-- Public copy of the Real Assist vector icon; shapes use a 512-by-512 viewBox. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Real Assist">
+  <!-- Rounded cream tile behind the emblem. -->
   <rect width="512" height="512" rx="112" fill="#FCFAF5"/>
+  <!-- White inner disk with a gold outline. -->
   <circle cx="256" cy="256" r="204" fill="#FFFFFF" stroke="#D6A83E" stroke-width="18"/>
+  <!-- Dark-green central monogram. The path data describes its drawn outline. -->
   <path d="M138 342V178h55l63 96 63-96h55v164h-50v-88l-48 72h-40l-48-72v88h-50Z" fill="#064E3B"/>
+  <!-- Gold underline beneath the monogram. -->
   <path d="M158 380h196" stroke="#D6A83E" stroke-width="18" stroke-linecap="round"/>
+  <!-- Short green accent line above the monogram. -->
   <path d="M180 142h152" stroke="#064E3B" stroke-width="16" stroke-linecap="round"/>
 </svg>
