@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react'
 import realassistlogo from './assets/real-assist-logo.png'
 import './App.css'
+import ShowingOrdersPage from './ShowingOrders'
+import RealAssistOperatingSystem from "./RealAssistOperatingSystem";
+
+import {
+  ClipboardList,
+  UsersRound,
+  Bell,
+  UserPlus,
+  MessageCircle,
+} from 'lucide-react'
+
+
 
 // Read a saved list from this browser. The stored value is JSON text, so parse it
 // back into JavaScript data; if it is missing, damaged, or not a list, use [] instead.
@@ -16,7 +28,7 @@ function loadList(key) {
 
 // Show the user's at-a-glance Command Center. The lists and navigation callback
 // come from App, so the dashboard displays the same client, search, and event records.
-function DashboardPage({ clients, searches, events, onNavigate }) {
+function DashboardPage({ clients, searches, events, showingOrders, onNavigate }) {
   // Use YYYY-MM-DD strings so today's date can be compared with saved event dates.
   const today = new Date().toISOString().slice(0, 10)
 
@@ -29,20 +41,17 @@ function DashboardPage({ clients, searches, events, onNavigate }) {
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 4)
 
-  // Count calendar entries whose name contains "showing", ignoring capitalization.
-  const showings = events.filter((event) => /showing/i.test(event.name)).length
-
   // Keep the text entered in the assistant box and its on-screen response between renders.
   const [assistantQuery, setAssistantQuery] = useState('')
   const [assistantMessage, setAssistantMessage] = useState('')
 
   // Describe each dashboard tile: its title, count, destination page, and displayed letter.
   const metrics = [
-    { label: 'Showing Orders', count: showings, page: 'calendar', mark: 'S' },
-    { label: 'Active Clients', count: clients.length, page: 'clients', mark: 'C' },
-    { label: 'Saved Searches', count: searches.length, page: 'resources', mark: 'R' },
-    { label: 'Events Today', count: todayEvents.length, page: 'calendar', mark: 'T' },
-    { label: 'Upcoming Events', count: upcomingEvents.length, page: 'calendar', mark: 'U' },
+    { label: 'Showing Orders', count: showingOrders.length, page: 'showing-orders', icon: ClipboardList},
+    { label: 'Active Clients', count: clients.length, page: 'clients', icon: UsersRound  },
+    { label: 'Task Due', count: searches.length, page: 'resources', icon: Bell },
+    { label: 'New Leads', count: todayEvents.length, page: 'calendar', icon: UserPlus  },
+    { label: 'Missed Messages', count: upcomingEvents.length, page: 'calendar', icon: MessageCircle  },
   ]
 
   // Stop the browser from reloading on submit. The AI service is not connected yet,
@@ -52,9 +61,11 @@ function DashboardPage({ clients, searches, events, onNavigate }) {
     if (!assistantQuery.trim()) return
     setAssistantMessage('The assistant connection is not set up yet. Your question has not been sent.')
   }
-
+  
   return (
-    // The dashboard is split into its heading, summary tiles, assistant, and reminder.
+  
+    <>
+    {/*The dashboard is split into its heading, summary tiles, assistant, and reminder.*/}
     <section className="command-center">
       {/* Page title and the round shortcuts in the upper-right corner. */}
       <div className="command-center-topbar">
@@ -73,11 +84,11 @@ function DashboardPage({ clients, searches, events, onNavigate }) {
 
       {/* Create one clickable tile for each item in the metrics list above. */}
       <div className="command-metrics">
-        {metrics.map((metric) => (
-          <button className="command-metric" key={metric.label} onClick={() => onNavigate(metric.page)} type="button">
-            <span className="metric-mark" aria-hidden="true">{metric.mark}</span>
-            <span className="metric-label">{metric.label}</span>
-            <strong>{metric.count}</strong>
+        {metrics.map(({label, count, page, icon: Icon}) => (
+          <button className="command-metric" key={label} onClick={() => onNavigate(page)} type="button">
+            <span className="metric-mark" aria-hidden="true"><Icon size={16} strokeWidth={2} /></span>
+            <span className="metric-label">{label}</span>
+            <strong>{count}</strong>
             <span className="metric-link">View all</span>
           </button>
         ))}
@@ -116,14 +127,15 @@ function DashboardPage({ clients, searches, events, onNavigate }) {
           <strong>I&apos;m here to help you win!</strong>
         </div>
       </section>
-
+      </section>
       {/* A static encouragement message at the bottom of the dashboard. */}
       <section className="encouragement-strip">
         <span className="encouragement-kicker">Today&apos;s encouragement</span>
         <p>You don&apos;t need a perfect day. You need one clear next step.</p>
       </section>
-    </section>)
+    </>)
 }
+
 
 // Let the user add a client and filter the same shared client list by name.
 function ClientsPage({ clients, setClients }) {
@@ -321,16 +333,19 @@ function App() {
   const [clients, setClients] = useState(() => loadList('ra_clients'))
   const [events, setEvents] = useState(() => loadList('ra_events'))
   const [searches, setSearches] = useState(() => loadList('ra_searches'))
+  const [showingOrders, setShowingOrders] = useState(() => loadList('ra_showing_orders'))
 
   // Keep browser storage synchronized whenever a list changes. This is local to this browser.
   useEffect(() => localStorage.setItem('ra_clients', JSON.stringify(clients)), [clients])
   useEffect(() => localStorage.setItem('ra_events', JSON.stringify(events)), [events])
   useEffect(() => localStorage.setItem('ra_searches', JSON.stringify(searches)), [searches])
+  useEffect(() => localStorage.setItem('ra_showing_orders', JSON.stringify(showingOrders)), [showingOrders])
 
   // Each pair connects the sidebar's visible label to the page key used below.
   const navigation = [
     ['dashboard', 'Dashboard'],
     ['resources', 'Resource Brain'],
+    ['showing-orders', 'Showing Orders'],
     ['calendar', 'Calendar'],
     ['clients', 'Clients'],
   ]
@@ -376,12 +391,17 @@ function App() {
         {/* Render exactly one screen while passing shared data and update functions to it. */}
         {currentPage === 'resources' ? (
           <ResourcesPage onSaveSearch={(search) => setSearches((current) => [search, ...current])} />
+        ) : currentPage === 'showing-orders' ? (
+          <ShowingOrdersPage clients={clients} showingOrders={showingOrders} setShowingOrders={setShowingOrders} />
         ) : currentPage === 'calendar' ? (
           <CalendarPage events={events} setEvents={setEvents} />
         ) : currentPage === 'clients' ? (
           <ClientsPage clients={clients} setClients={setClients} />
         ) : (
-          <DashboardPage clients={clients} searches={searches} events={events} onNavigate={setCurrentPage} />
+         <>
+         <DashboardPage clients={clients} searches={searches} events={events} showingOrders={showingOrders} onNavigate={setCurrentPage} />
+         <RealAssistOperatingSystem navigate={setCurrentPage} />
+         </>
         )}
       </main>
     </div>
