@@ -138,44 +138,248 @@ function DashboardPage({ clients, searches, events, showingOrders, onNavigate })
 
 
 // Let the user add a client and filter the same shared client list by name.
-function ClientsPage({ clients, setClients }) {
-  // name holds the new-client form value; search holds the list-filter text.
-  const [name, setName] = useState('')
-  const [search, setSearch] = useState('')
 
-  // Add a new client after the form is submitted, then clear the input field.
+  // name holds the new-client form value; search holds the list-filter text.
+ const clientStatuses = [
+  'New Lead',
+  'Pre-Approved',
+  'Viewing Houses',
+  'Under Contract',
+  'Closing Scheduled',
+  'Closed',
+  'Paused',
+  'Archived',
+]
+
+const statusProgress = {
+  'New Lead': 0,
+  'Pre-Approved': 20,
+  'Viewing Houses': 35,
+  'Under Contract': 65,
+  'Closing Scheduled': 85,
+  Closed: 100,
+  Paused: 0,
+  Archived: 0,
+}
+
+function ClientsPage({ clients, setClients }) {
+  const blankClient = {
+    name: '',
+    phone: '',
+    email: '',
+    lender: '',
+    status: 'New Lead',
+  }
+  const [newClient, setNewClient] = useState(blankClient)
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [openProfileId, setOpenProfileId] = useState(null)
+
   function addClient(event) {
     event.preventDefault()
-    const trimmedName = name.trim()
-    if (!trimmedName) return
+    if (!newClient.name.trim()) return
 
     setClients((current) => [
+      {
+        ...newClient,
+        id: crypto.randomUUID(),
+        name: newClient.name.trim(),
+        nextFollowUp: '',
+        notes: [],
+        tasks: [],
+      },
       ...current,
-      { id: crypto.randomUUID(), name: trimmedName },])
-    setName('')
+    ])
+    setNewClient(blankClient)
   }
 
-  // Build the visible list by checking whether each name contains the search text.
-  const matchingClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(search.trim().toLowerCase()),
-  )
+  function updateClient(clientId, updates) {
+    setClients((current) =>
+      current.map((client) =>
+        client.id === clientId ? { ...client, ...updates } : client
+      )
+    )
+  }
+
+  function addEntry(client, field) {
+    const value = window.prompt(
+      field === 'notes' ? 'Add a note' : 'Add a task'
+    )
+    if (!value?.trim()) return
+
+    updateClient(client.id, {
+      [field]: [...(client[field] || []), value.trim()],
+    })
+  }
+
+  const visibleClients = clients.filter((client) => {
+    const status = client.status || 'New Lead'
+    if (statusFilter === 'All') return true
+    if (statusFilter === 'Open Goals + Pipeline') {
+      return !['Closed', 'Paused', 'Archived'].includes(status)
+    }
+    return status === statusFilter
+  })
+
   return (
-    // The form creates clients; the search field and list show/filter existing clients.
-    <section className="clients-page">
-      <h1>Clients</h1>
-      <form className="clients-form" onSubmit={addClient}>
-        <input value={name} onChange={(event) => setName(event.target.value)} placeholder="New client name" aria-label="New client name" required/>
-        <button type="submit">Add client</button>
-      </form>
+    <section className="clients-board">
+      <div className="client-board-panel">
+        <h1>Client Connection Board</h1>
+        <p>
+          Clients connect to lender updates, communication, documents, dream
+          sheets, shared properties, tasks, calendar events, resources,
+          transactions, and pipeline goals.
+        </p>
 
-      <input className="client-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search clients" aria-label="Search clients"/>
+        <form className="client-board-form" onSubmit={addClient}>
+          <input
+            aria-label="Client name"
+            placeholder="Client name"
+            required
+            value={newClient.name}
+            onChange={(event) =>
+              setNewClient({ ...newClient, name: event.target.value })
+            }
+          />
+          <input
+            aria-label="Phone"
+            placeholder="Phone"
+            value={newClient.phone}
+            onChange={(event) =>
+              setNewClient({ ...newClient, phone: event.target.value })
+            }
+          />
+          <input
+            aria-label="Email"
+            type="email"
+            placeholder="Email"
+            value={newClient.email}
+            onChange={(event) =>
+              setNewClient({ ...newClient, email: event.target.value })
+            }
+          />
+          <input
+            aria-label="Lender"
+            placeholder="Lender"
+            value={newClient.lender}
+            onChange={(event) =>
+              setNewClient({ ...newClient, lender: event.target.value })
+            }
+          />
+          <select
+            aria-label="New client status"
+            value={newClient.status}
+            onChange={(event) =>
+              setNewClient({ ...newClient, status: event.target.value })
+            }
+          >
+            {clientStatuses.map((status) => (
+              <option key={status}>{status}</option>
+            ))}
+          </select>
+          <button type="submit">Add Client</button>
+        </form>
+      </div>
 
-      <ul className="client-list"> {matchingClients.map((client) => (<li key={client.id}>{client.name}</li>))}
-      </ul>
-      {matchingClients.length === 0 && <p>No matching clients.</p>}
+      <div className="client-board-panel">
+        <h2>Client Filters</h2>
+        <div className="client-filters">
+          {['All', ...clientStatuses, 'Open Goals + Pipeline'].map((filter) => (
+            <button
+              className={statusFilter === filter ? 'active' : ''}
+              key={filter}
+              onClick={() => setStatusFilter(filter)}
+              type="button"
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="client-card-grid">
+        {visibleClients.map((client) => {
+          const status = client.status || 'New Lead'
+          const progress = statusProgress[status] ?? 0
+
+          return (
+            <article className="client-card" key={client.id}>
+              <div className="client-card-heading">
+                <span>{status}</span>
+                <strong>{progress}%</strong>
+              </div>
+              <h2>{client.name}</h2>
+              <p>{client.phone || 'No phone'} · {client.email || 'No email'}</p>
+              <p>Lender: {client.lender || 'Assign lender'}</p>
+              <p>Next follow-up: {client.nextFollowUp || 'Set follow-up'}</p>
+
+              <div
+                className="client-progress"
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <span style={{ width: `${progress}%` }} />
+              </div>
+
+              <div className="client-actions">
+                <button
+                  className="primary"
+                  type="button"
+                  onClick={() =>
+                    setOpenProfileId(
+                      openProfileId === client.id ? null : client.id
+                    )
+                  }
+                >
+                  {openProfileId === client.id ? 'Close Profile' : 'Open Profile'}
+                </button>
+                <a href={`sms:${client.phone || ''}`}>Message</a>
+                <a href={`tel:${client.phone || ''}`}>Call</a>
+                <a href={`mailto:${client.email || ''}`}>Email</a>
+                <button type="button" onClick={() => addEntry(client, 'notes')}>
+                  Add Note
+                </button>
+                <button type="button" onClick={() => addEntry(client, 'tasks')}>
+                  Add Task
+                </button>
+              </div>
+
+              <select
+                aria-label={`Update ${client.name} status`}
+                value={status}
+                onChange={(event) =>
+                  updateClient(client.id, { status: event.target.value })
+                }
+              >
+                {clientStatuses.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+
+              {openProfileId === client.id && (
+                <div className="client-profile-details">
+                  <strong>Notes</strong>
+                  {(client.notes || []).map((note, index) => (
+                    <p key={`${client.id}-note-${index}`}>{note}</p>
+                  ))}
+                  <strong>Tasks</strong>
+                  {(client.tasks || []).map((task, index) => (
+                    <p key={`${client.id}-task-${index}`}>{task}</p>
+                  ))}
+                </div>
+              )}
+            </article>
+          )
+        })}
+      </div>
     </section>
   )
 }
+
+
+
+
 
 // Collect a ZIP code and resource query, then pass the search to App for saving.
 function ResourcesPage({ onSaveSearch }) {
