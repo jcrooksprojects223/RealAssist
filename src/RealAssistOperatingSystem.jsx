@@ -1,7 +1,10 @@
+import { useState } from "react";
+
 const RealAssistOperatingSystem = [
   {
     title: "CRM + Follow-Up",
-    description: "Client stages, lead source, relationship history, touches, tasks, smart reminders, and next-best-action prompts.",
+    description:
+      "Client stages, lead source, relationship history, touches, tasks, smart reminders, and next-best-action prompts.",
     actions: [
       ["Open Pipeline", "pipeline"],
       ["Open Clients", "clients"],
@@ -10,7 +13,8 @@ const RealAssistOperatingSystem = [
   },
   {
     title: "Property + Rental Search",
-    description: "Saved home searches, property notes, showing tasks, and client sharing.",
+    description:
+      "Saved home searches, property notes, showing tasks, and client sharing.",
     actions: [
       ["Search Properties", "resources"],
       ["Plan Showing Route", "showing-orders"],
@@ -19,7 +23,8 @@ const RealAssistOperatingSystem = [
   },
   {
     title: "Transaction AI",
-    description: "Deadline checks, missing paperwork prompts, document summaries, and next-step guidance.",
+    description:
+      "Deadline checks, missing paperwork prompts, document summaries, and next-step guidance.",
     actions: [
       ["Open AI Assistant", "dashboard"],
       ["Open Transactions", "showing-orders"],
@@ -28,7 +33,8 @@ const RealAssistOperatingSystem = [
   },
   {
     title: "Marketing + Command Center",
-    description: "Listing posts, local market support, open house ideas, and content tools.",
+    description:
+      "Listing posts, local market support, open house ideas, and content tools.",
     actions: [
       ["Open Marketing Studio", "calendar"],
       ["Open Holiday Hub", "calendar"],
@@ -38,27 +44,56 @@ const RealAssistOperatingSystem = [
 ];
 
 export default function RealAssistOperatingSystemFrame({ navigate }) {
-  return (
+  const [isOpen, setIsOpen] = useState(true);
+  
+   return (
     <section className="operating-system-panel">
-      <p className="operating-system-kicker">Real Assist Operating System</p>
-      <h2 className="operating-system-title">
-        CRM, property search, communication, scheduling, resources, and AI support
-      </h2>
-      <div className="operating-system-grid">
-        {RealAssistOperatingSystem.map((group) => (
-          <article className="operating-system-card" key={group.title}>
-            <h3>{group.title}</h3>
-            <p>{group.description}</p>
-            <div className="operating-system-actions">
-              {group.actions.map(([label, page]) => (
-                <button key={label} onClick={() => navigate?.(page)} type="button">
-                  {label}
-                </button>
-              ))}
-            </div>
-          </article>
-        ))}
+      <div className="operating-system-heading">
+        <div>
+          <p className="operating-system-kicker">
+            Real Assist Operating System
+          </p>
+
+          <h2 className="operating-system-title">
+            CRM, property search, communication, scheduling, resources, and AI support
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          className="operating-system-toggle"
+          onClick={() => setIsOpen((current) => !current)}
+          aria-expanded={isOpen}
+        >
+          {isOpen ? "▲" : "▼"}
+        </button>
       </div>
+
+      {isOpen && (
+        <div className="operating-system-grid">
+          {RealAssistOperatingSystem.map((group) => (
+            <article
+              className="operating-system-card"
+              key={group.title}
+            >
+              <h3>{group.title}</h3>
+              <p>{group.description}</p>
+
+              <div className="operating-system-actions">
+                {group.actions.map(([label, page]) => (
+                  <button
+                    key={label}
+                    onClick={() => navigate?.(page)}
+                    type="button"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
-  )
+  );
 }

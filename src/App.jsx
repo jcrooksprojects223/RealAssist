@@ -3,7 +3,7 @@ import realassistlogo from './assets/real-assist-logo.png'
 import './App.css'
 import ShowingOrdersPage from './ShowingOrders'
 import RealAssistOperatingSystem from "./RealAssistOperatingSystem";
-
+import { defaultDashboardWidgets } from "./DashboardWidgets"
 import {
   ClipboardList,
   UsersRound,
@@ -63,7 +63,6 @@ function DashboardPage({ clients, searches, events, showingOrders, onNavigate })
   }
   
   return (
-  
     <>
     {/*The dashboard is split into its heading, summary tiles, assistant, and reminder.*/}
     <section className="command-center">
@@ -128,6 +127,8 @@ function DashboardPage({ clients, searches, events, showingOrders, onNavigate })
         </div>
       </section>
       </section>
+      
+
       {/* A static encouragement message at the bottom of the dashboard. */}
       <section className="encouragement-strip">
         <span className="encouragement-kicker">Today&apos;s encouragement</span>
@@ -135,7 +136,6 @@ function DashboardPage({ clients, searches, events, showingOrders, onNavigate })
       </section>
     </>)
 }
-
 
 // Let the user add a client and filter the same shared client list by name.
 
@@ -528,10 +528,43 @@ function CalendarPage({ events, setEvents }) {
     </section>
   )
 }
+
+
+
+
 function App() {
   // sidebarOpen controls the navigation panel; currentPage selects the main screen.
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [currentPage, setCurrentPage] = useState('dashboard')
+  const [additionalToolsOpen, setAdditionalToolsOpen] = useState(true)
+  const [hiddenWidgets, setHiddenWidgets] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem("realAssistHiddenWidgets")) || []
+  } catch {
+    return []
+  }
+})
+
+useEffect(() => {
+  localStorage.setItem(
+    "realAssistHiddenWidgets",
+    JSON.stringify(hiddenWidgets)
+  )
+}, [hiddenWidgets])
+
+const visibleWidgets = defaultDashboardWidgets.filter(
+  (widget) => !hiddenWidgets.includes(widget.id)
+)
+
+function hideWidget(id) {
+  setHiddenWidgets((current) =>
+    current.includes(id) ? current : [...current, id]
+  )
+}
+
+function resetWidgets() {
+  setHiddenWidgets([])
+}
 
   // Load each saved list once when the app starts so every screen shares the same records.
   const [clients, setClients] = useState(() => loadList('ra_clients'))
@@ -603,8 +636,85 @@ function App() {
           <ClientsPage clients={clients} setClients={setClients} />
         ) : (
          <>
-         <DashboardPage clients={clients} searches={searches} events={events} showingOrders={showingOrders} onNavigate={setCurrentPage} />
-         <RealAssistOperatingSystem navigate={setCurrentPage} />
+        <DashboardPage
+              clients={clients}
+              searches={searches}
+              events={events}
+              showingOrders={showingOrders}
+              onNavigate={setCurrentPage}
+            />
+
+            <RealAssistOperatingSystem navigate={setCurrentPage} />
+            
+          <section className="dashboard-widget-panel">
+  <div className="dashboard-widget-heading">
+    <div>
+      <p className="dashboard-widget-kicker">Real Assist</p>
+      <h2 className="dashboard-widget-title">
+        Real Assist Additional Tools
+      </h2>
+    </div>
+
+    <button
+      type="button"
+      className="dashboard-widget-toggle"
+      onClick={() => setAdditionalToolsOpen((current) => !current)}
+      aria-expanded={additionalToolsOpen}
+      aria-controls="additional-tools-grid"
+    >
+      {additionalToolsOpen ? "▲" : "▼"}
+    </button>
+  </div>
+
+  {additionalToolsOpen && (
+    <div
+      className="dashboard-widget-grid"
+      id="additional-tools-grid"
+    >
+      {visibleWidgets.map((widget) => (
+        <article className="dashboard-widget-card" key={widget.id}>
+          <button
+            type="button"
+            className="dashboard-widget-hide"
+            onClick={() => hideWidget(widget.id)}
+            aria-label={`Hide ${widget.title}`}
+          >
+            Hide
+          </button>
+
+          <p className="dashboard-widget-category">
+            {widget.category}
+          </p>
+
+          <h3>{widget.title}</h3>
+
+          <p className="dashboard-widget-description">
+            {widget.description}
+          </p>
+
+          <button
+            type="button"
+            className="dashboard-widget-open"
+            onClick={() => setCurrentPage(widget.page)}
+          >
+            Open
+          </button>
+        </article>
+      ))}
+    </div>
+  )}
+</section>
+
+
+            {hiddenWidgets.length > 0 && (
+              <button
+                type="button"
+                className="dashboard-widget-reset"
+                onClick={resetWidgets}
+              >
+                Reset Hidden Cards
+              </button>
+            )}
          </>
         )}
       </main>
